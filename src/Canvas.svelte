@@ -3,13 +3,13 @@
   import type {ChangeEvent} from "rollup";
   import { findNearestResolution } from './resolution-helper';
 
-  type SelectedResolution = `${number}x${number}`
+  type SelectedResolution = `${number}x${number}` | 'auto';
 
   let backgroundImage: HTMLImageElement;
   let canvas: HTMLCanvasElement;
   let canvasWidth = 0;
   let canvasHeight = 0;
-  let selectedResolution: SelectedResolution | '' = '';
+  let selectedResolution: SelectedResolution | '' = 'auto';
   let ctx: CanvasRenderingContext2D;
   let selectedMonth = new Date().getMonth();
   let selectedYear = new Date().getFullYear();
@@ -31,11 +31,11 @@
   }
 
   onMount(() => {
-    const initialResolution = findNearestResolution(window.innerWidth, window.innerHeight);
-    canvasWidth = initialResolution.width;
-    canvasHeight = initialResolution.height;
+    // const initialResolution = findNearestResolution(window.innerWidth, window.innerHeight);
+    // canvasWidth = initialResolution.width;
+    // canvasHeight = initialResolution.height;
+    // selectedResolution = `${canvasWidth}x${canvasHeight}` as SelectedResolution;
     ctx = canvas.getContext('2d');
-    selectedResolution = `${canvasWidth}x${canvasHeight}` as SelectedResolution;
     requestDrawCalendar();
   });
 
@@ -58,7 +58,7 @@
       backgroundImage.src = event.target.result as string;
 
       backgroundImage.onload = () => {
-        requestDrawCalendar();
+        updateCanvasSize();
       };
     };
 
@@ -105,7 +105,7 @@
     const monthYearText = `${monthNames[month]} - ${year}`;
     ctx.font = 'bold 20px Arial';
     const monthYearTextMeasure = ctx.measureText(monthYearText);
-    const monthYearTextX = totalCalendarWidth / 2;
+    const monthYearTextX = startX + totalCalendarWidth / 2;
     const monthYearHeight = monthYearTextMeasure.actualBoundingBoxAscent + monthYearTextMeasure.actualBoundingBoxDescent;
     ctx.fillText(monthYearText, monthYearTextX, startY + monthYearHeight);
 
@@ -156,10 +156,17 @@
     requestDrawCalendar();
   }
 
-  function updateSelectedResolution() {
-    const [width, height] = selectedResolution.split('x').map(Number);
-    canvasWidth = width;
-    canvasHeight = height;
+  function updateCanvasSize() {
+    if (selectedResolution === "auto") {
+      if (backgroundImage) {
+        canvasWidth = backgroundImage.naturalWidth;
+        canvasHeight = backgroundImage.naturalHeight;
+      }
+    } else {
+      const [width, height] = selectedResolution.split("x").map(Number);
+      canvasWidth = width;
+      canvasHeight = height;
+    }
   }
 
 </script>
@@ -208,7 +215,8 @@
   <label for="canvasHeight">Canvas Height: </label>
   <input id="canvasHeight" type="number" min="300" bind:value={canvasHeight} on:input={() => requestDrawCalendar()} />
 
-  <select bind:value={selectedResolution} on:change={() => updateSelectedResolution()}>
+  <select bind:value={selectedResolution} on:change={() => updateCanvasSize()}>
+    <option value="auto">Fit to background image</option>
     <option value="800x600">800x600</option>
     <option value="1024x768">1024x768</option>
     <option value="1280x720">1280x720 (720p)</option>
