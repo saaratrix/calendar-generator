@@ -3,6 +3,8 @@
   import type {ChangeEvent} from "rollup";
   import { drawCalendar } from './calendar-drawer';
   import type { ImageRect } from './image-rect';
+  import ImageMover from './ImageMover.svelte';
+  import { currentSelectedImageStore } from './store';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
@@ -16,6 +18,7 @@
   let selectedYear = new Date().getFullYear();
   let boxSize = 100;
 
+  let currentSelectedImage: ImageRect | undefined = undefined;
   let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0 };
   let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0 };
 
@@ -36,13 +39,31 @@
     }
   }
 
+  $: {
+    if (backgroundRect || calendarRect) {
+      currentSelectedImageStore.set(currentSelectedImage);
+    }
+  }
+
+  $: {
+    if (currentSelectedImage) {
+      currentSelectedImageStore.set(currentSelectedImage);
+    }
+  }
+
   onMount(() => {
     // const initialResolution = findNearestResolution(window.innerWidth, window.innerHeight);
     // canvasWidth = initialResolution.width;
     // canvasHeight = initialResolution.height;
     // selectedResolution = `${canvasWidth}x${canvasHeight}` as SelectedResolution;
     // ctx = canvas.getContext('2d');
+    updateCalendarRect();
     requestDrawCalendar();
+
+    window.addEventListener('click', deselectImage);
+    return () => {
+      window.removeEventListener('click', deselectImage);
+    };
   });
 
   function requestDrawCalendar() {
@@ -110,24 +131,60 @@
     }
   }
 
-  function updateBoxSize() {
+  function updateCalendarRect() {
     calendarRect.width = boxSize * 7;
     calendarRect.height = boxSize * (6 + 1); // 6 weeks + 1 row for days of the week
+  }
+
+  function updateBoxSize() {
+    updateCalendarRect();
     requestDrawCalendar();
+  }
+
+  function onCanvasClick(event: MouseEvent) {
+    const x = event.clientX;
+    const y = event.clientY;
+
+    if (x >= calendarRect.x && x <= calendarRect.x + calendarRect.width &&
+        y >= calendarRect.y && y <= calendarRect.y + calendarRect.height) {
+      currentSelectedImage = calendarRect;
+    } else if (x >= backgroundRect.x && x <= backgroundRect.x + backgroundRect.width &&
+               y >= backgroundRect.y && y <= backgroundRect.y + backgroundRect.height) {
+      currentSelectedImage = backgroundRect;
+    } else {
+      currentSelectedImage = undefined;
+    }
+  }
+
+  function deselectImage(event: MouseEvent) {
+    if (canvas.contains(event.target as HTMLElement)) {
+      return;
+    }
+    currentSelectedImage = undefined;
   }
 
 </script>
 
-<style>
+<style lang="scss">
 
   .settings {
     display: flex;
   }
 
-  canvas {
+  .canvas-container {
+    position: relative;
+    box-sizing: border-box;
     border: 1px solid black;
+    display: inline-flex;
+  }
+
+  canvas {
+    z-index: 1;
   }
 </style>
+
+
+
 <div class="settings">
   <input type="file" accept="image/*" on:input={handleFileUpload} />
 
@@ -175,5 +232,9 @@
   </select>
 </div>
 
-<canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
+<div class="canvas-container">
+  <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:image-moved="{requestDrawCalendar}" />
+  <canvas bind:this={canvas} on:click="{onCanvasClick}" width={canvasWidth} height={canvasHeight}></canvas>
+</div>
+
 
