@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type {ChangeEvent} from "rollup";
-  import { findNearestResolution } from './resolution-helper';
+  import { drawCalendar } from './calendar-drawer';
+  import type { ImageRect } from './image-rect';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
@@ -15,6 +16,9 @@
   let selectedYear = new Date().getFullYear();
   let boxSize = 100;
 
+  let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0 };
+  let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0 };
+
   let drawRequested = false;
 
   $: {
@@ -27,6 +31,8 @@
     if (canvas) {
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
+      backgroundRect.height = canvasHeight;
+      backgroundRect.width = canvasWidth;
     }
   }
 
@@ -35,19 +41,29 @@
     // canvasWidth = initialResolution.width;
     // canvasHeight = initialResolution.height;
     // selectedResolution = `${canvasWidth}x${canvasHeight}` as SelectedResolution;
-    ctx = canvas.getContext('2d');
+    // ctx = canvas.getContext('2d');
     requestDrawCalendar();
   });
 
   function requestDrawCalendar() {
-  if (!drawRequested) {
-    drawRequested = true;
-    requestAnimationFrame(() => {
-      drawCalendar(selectedMonth, selectedYear);
-      drawRequested = false;
-    });
+    if (!drawRequested) {
+      drawRequested = true;
+      requestAnimationFrame(() => {
+        drawCalendar({
+          month: selectedMonth,
+          year: selectedYear,
+          boxSize,
+          backgroundImage,
+          canvas,
+          calendarRect,
+          backgroundRect,
+          firstDayOfWeek: 1,
+          locale: 'en-GB',
+        });
+        drawRequested = false;
+      });
+    }
   }
-}
 
   function handleFileUpload(e: ChangeEvent) {
     const file = e.target.files[0];
@@ -56,92 +72,17 @@
     reader.onload = (event) => {
       backgroundImage = new Image();
       backgroundImage.src = event.target.result as string;
-
-      backgroundImage.onload = () => {
-        updateCanvasSize();
-      };
+      backgroundImage.onload = () => onBackgroundImageLoad();
     };
 
     reader.readAsDataURL(file);
   }
 
-  function drawCalendar(month: number, year: number) {
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (backgroundImage) {
-      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-    }
-
-    // Set text style
-    ctx.fillStyle = 'white';
-    ctx.strokeStyle = 'white';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.shadowColor = 'black';
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowBlur = 4;
-
-    // Calculate the starting day and number of days in the month
-    let startDay = new Date(year, month, 1).getDay() - 1; // Subtract 1 to start from Monday
-    startDay = startDay === -1 ? 6 : startDay; // If startDay is -1 (Sunday), set it to 6
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    let date = 1;
-    let x = 0;
-    let y = 0;
-    const numCols = 7;
-    const totalCalendarWidth = boxSize * numCols;
-    const startX = 25; //(canvas.width - gridWidth) / 2;
-    let startY = 0;
-
-    // Draw weekday names
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    const monthYearText = `${monthNames[month]} - ${year}`;
-    ctx.font = 'bold 20px Arial';
-    const monthYearTextMeasure = ctx.measureText(monthYearText);
-    const monthYearTextX = startX + totalCalendarWidth / 2;
-    const monthYearHeight = monthYearTextMeasure.actualBoundingBoxAscent + monthYearTextMeasure.actualBoundingBoxDescent;
-    ctx.fillText(monthYearText, monthYearTextX, startY + monthYearHeight);
-
-    ctx.font = 'bold 16px Arial';
-    startY += monthYearHeight * 1.5;
-    const weekdaysHeight = monthYearHeight;
-
-    for (let col = 0; col < 7; col++) {
-      const x = startX + col * boxSize;
-      ctx.fillText(weekdays[col], x + boxSize / 2, startY + weekdaysHeight);
-    }
-
-    startY += weekdaysHeight * 2;
-    ctx.font = '16px Arial';
-    // Iterate through weeks (rows)
-    for (let week = 0; week < 6; week++) {
-      y = week * boxSize + startY;
-
-      // Iterate through days (columns)
-      for (let day = 0; day < 7; day++) {
-        x = startX + day * boxSize;
-
-        if (week === 0 && day < startDay || date > daysInMonth) {
-          // Skip empty cells before the start of the month or after the end of the month
-          continue;
-        }
-
-        // Draw the date box
-        ctx.strokeRect(x, y, boxSize, boxSize);
-
-        // Draw the date number
-        ctx.fillText(date.toString(), x + boxSize / 2, y + monthYearHeight);
-
-        date++;
-      }
-    }
+  // When the background image is loaded, update backgroundRect
+  function onBackgroundImageLoad() {
+    updateCanvasSize();
+    backgroundRect.height = canvasHeight;
+    backgroundRect.width = canvasWidth;
   }
 
   function exportCalendar() {
@@ -167,6 +108,12 @@
       canvasWidth = width;
       canvasHeight = height;
     }
+  }
+
+  function updateBoxSize() {
+    calendarRect.width = boxSize * 7;
+    calendarRect.height = boxSize * (6 + 1); // 6 weeks + 1 row for days of the week
+    requestDrawCalendar();
   }
 
 </script>
@@ -207,7 +154,7 @@
 </div>
 <div class="settings">
   <label for="boxSize">Box Size: </label>
-  <input id="boxSize" type="number" min="50" bind:value={boxSize} on:input={() => requestDrawCalendar()} />
+  <input id="boxSize" type="number" min="50" bind:value={boxSize} on:input={() => updateBoxSize()} />
 
   <label for="canvasWidth">Canvas Width: </label>
   <input id="canvasWidth" type="number" min="300" bind:value={canvasWidth} on:input={() => requestDrawCalendar()} />
