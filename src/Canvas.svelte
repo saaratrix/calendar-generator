@@ -134,7 +134,13 @@
 
   function updateCalendarRect() {
     calendarRect.width = boxSize * 7;
-    calendarRect.height = boxSize * (6 + 1); // 6 weeks + 1 row for days of the week
+
+    const firstDayOfWeek = 1;
+    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    const firstDayOfWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay() - firstDayOfWeek;
+    const rows = Math.ceil((daysInMonth + firstDayOfWeekIndex) / 7);
+
+    calendarRect.height = boxSize * (rows + 1);
   }
 
   function updateBoxSize() {

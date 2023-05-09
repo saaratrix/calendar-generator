@@ -62,7 +62,10 @@
 
   function onPointerUp(event: PointerEvent  ) {
     isMoving = false;
-    if (hasMoved || resetButtonRef.contains(event.target as Node)) {
+
+    if (hasMoved) {
+      event.stopPropagation();
+    } else if (resetButtonRef.contains(event.target as Node)) {
       event.stopPropagation();
     }
     hasMoved = false;
@@ -142,6 +145,7 @@
       xmlns="http://www.w3.org/2000/svg"
       width="{currentSelectedImage.width}"
       height="{currentSelectedImage.height}"
+
     >
       <rect
         class="dashed-main"
