@@ -61,9 +61,9 @@
     updateCalendarRect();
     requestDrawCalendar();
 
-    window.addEventListener('pointerup', deselectImage);
+    window.addEventListener('pointerup', trySelectImage);
     return () => {
-      window.removeEventListener('pointerup', deselectImage);
+      window.removeEventListener('pointerup', trySelectImage);
     };
   });
 
@@ -148,26 +148,50 @@
     requestDrawCalendar();
   }
 
-  function onCanvasClick(event: MouseEvent) {
-    const x = event.clientX;
-    const y = event.clientY;
+  function trySelectImage(event: MouseEvent) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const x = event.pageX - canvasRect.left - window.scrollX;
+    const y = event.pageY - canvasRect.top - window.scrollY;
 
-    if (x >= calendarRect.x && x <= calendarRect.x + calendarRect.width &&
-        y >= calendarRect.y && y <= calendarRect.y + calendarRect.height) {
-      currentSelectedImage = calendarRect;
-    } else if (x >= backgroundRect.x && x <= backgroundRect.x + backgroundRect.width &&
-               y >= backgroundRect.y && y <= backgroundRect.y + backgroundRect.height) {
-      currentSelectedImage = backgroundRect;
-    } else {
+    if (
+      x < 0 || x > canvasRect.width
+      || y < 0 || y > canvasRect.height
+    ) {
       currentSelectedImage = undefined;
-    }
-  }
-
-  function deselectImage(event: MouseEvent) {
-    if (canvas.contains(event.target as HTMLElement)) {
       return;
     }
+
+    if (
+      x >= calendarRect.x &&
+      x <= calendarRect.x + calendarRect.width &&
+      y >= calendarRect.y &&
+      y <= calendarRect.y + calendarRect.height
+    ) {
+      currentSelectedImage = calendarRect;
+      return;
+    }
+
+    if (
+      x >= backgroundRect.x &&
+      x <= backgroundRect.x + backgroundRect.width &&
+      y >= backgroundRect.y &&
+      y <= backgroundRect.y + backgroundRect.height
+    ) {
+      currentSelectedImage = backgroundRect;
+      return;
+    }
+
     currentSelectedImage = undefined;
+  }
+
+  function resetRects() {
+    calendarRect.x = initialCalendarRect.x;
+    calendarRect.y = initialCalendarRect.y;
+
+    backgroundRect.x = 0;
+    backgroundRect.y = 0;
+
+    requestDrawCalendar();
   }
 
 </script>
@@ -243,7 +267,7 @@
 
 <div class="canvas-container">
   <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
-  <canvas bind:this={canvas} on:click="{onCanvasClick}" width={canvasWidth} height={canvasHeight}></canvas>
+  <canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
 </div>
 
 
