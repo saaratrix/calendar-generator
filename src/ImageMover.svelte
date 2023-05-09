@@ -18,6 +18,13 @@
   let startX = 0;
   let startY = 0;
   let isMoving = false;
+  let hasMoved = false;
+  let isOutsideWindow = false;
+  let resetButtonRef: HTMLElement | undefined;
+
+  $: {
+    isOutsideWindow = currentSelectedImage && (currentSelectedImage.x + currentSelectedImage.width > window.innerWidth);
+  }
 
   onDestroy(() => {
     unsubscribe();
@@ -28,6 +35,7 @@
     startX = event.clientX;
     startY = event.clientY;
     isMoving = true;
+    hasMoved = false;
   }
 
   function onPointerMove(event: PointerEvent) {
@@ -39,25 +47,97 @@
     startX = event.clientX;
     startY = event.clientY;
 
+    if (dx !== 0 || dy !== 0) {
+      hasMoved = true;
+    }
+
     if (rafInProgress) return;
 
     rafInProgress = true;
     requestAnimationFrame(() => {
-      dispatch('imageMoved', currentSelectedImage);
       rafInProgress = false;
+      dispatch('imageMoved', currentSelectedImage);
     });
   }
 
-  function onPointerUp() {
+  function onPointerUp(event: PointerEvent  ) {
     isMoving = false;
+    if (hasMoved || resetButtonRef.contains(event.target as Node)) {
+      event.stopPropagation();
+    }
+    hasMoved = false;
   }
+
+  function resetImagePosition() {
+    currentSelectedImage.x = 0;
+    currentSelectedImage.y = 0;
+    dispatch('imageMoved', currentSelectedImage);
+  }
+
 </script>
+
+
+<style lang="scss">
+  .bounding-box {
+    position: absolute;
+    z-index: 9999;
+    --border-size: 4;
+  }
+
+  rect.dashed-main {
+    stroke: black;
+    fill: none;
+    stroke-width: var(--border-size);
+  }
+
+  rect.dashed-alternate {
+    stroke: white;
+    fill: none;
+    stroke-dasharray: var(--border-size),var(--border-size);
+    stroke-width: var(--border-size);
+  }
+
+  .reset-button {
+    position: absolute;
+    cursor: pointer;
+  }
+  .right-aligned {
+    right: 0;
+  }
+  .left-aligned {
+    left: 0;
+  }
+
+  .reset-icon {
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .reset-icon:hover {
+    color: silver;
+  }
+</style>
 
 {#if currentSelectedImage}
   <div
     class="bounding-box"
     style="left: {currentSelectedImage.x}px; top: {currentSelectedImage.y}px;"
+    on:pointerdown="{onPointerDown}"
+    on:pointerup="{onPointerUp}"
+    on:pointermove="{onPointerMove}"
   >
+    <div
+      class="reset-button"
+      bind:this={resetButtonRef}
+      class:left-aligned={isOutsideWindow}
+      class:right-aligned={!isOutsideWindow}
+      on:pointerup={resetImagePosition}
+    >
+      <span class="reset-icon">&#215;</span>
+    </div>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="{currentSelectedImage.width}"
@@ -86,25 +166,3 @@
     </svg>
   </div>
 {/if}
-
-<style lang="scss">
-  .bounding-box {
-    position: absolute;
-    pointer-events: none;
-    z-index: 9999;
-    --border-size: 4;
-  }
-
-  rect.dashed-main {
-    stroke: black;
-    fill: none;
-    stroke-width: var(--border-size);
-  }
-
-  rect.dashed-alternate {
-    stroke: white;
-    fill: none;
-    stroke-dasharray: var(--border-size),var(--border-size);
-    stroke-width: var(--border-size);
-  }
-</style>

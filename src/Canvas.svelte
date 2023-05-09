@@ -21,6 +21,7 @@
   let currentSelectedImage: ImageRect | undefined = undefined;
   let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0 };
   let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0 };
+  const initialCalendarRect = { ...calendarRect };
 
   let drawRequested = false;
 
@@ -60,9 +61,9 @@
     updateCalendarRect();
     requestDrawCalendar();
 
-    window.addEventListener('click', deselectImage);
+    window.addEventListener('pointerup', deselectImage);
     return () => {
-      window.removeEventListener('click', deselectImage);
+      window.removeEventListener('pointerup', deselectImage);
     };
   });
 
@@ -230,10 +231,12 @@
     <option value="5120x2880">5120x2880 (5K)</option>
     <option value="7680x4320">7680x4320 (8K)</option>
   </select>
+
+  <button on:click={resetRects}>Reset Rects</button>
 </div>
 
 <div class="canvas-container">
-  <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:image-moved="{requestDrawCalendar}" />
+  <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
   <canvas bind:this={canvas} on:click="{onCanvasClick}" width={canvasWidth} height={canvasHeight}></canvas>
 </div>
 
