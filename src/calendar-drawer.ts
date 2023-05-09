@@ -10,6 +10,20 @@ export interface DrawCalendarOptions {
   calendarRect: ImageRect;
   firstDayOfWeek?: number;
   locale?: string;
+  /**
+   * Hex value
+   */
+  calendarColor?: string;
+}
+
+// Chat GPT says this is based off this: https://en.wikipedia.org/wiki/Rec._709
+export function isColorDark(color: string): boolean {
+  const rgb = parseInt(color.replace("#", ""), 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = (rgb >> 0) & 0xff;
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luma < 32;
 }
 
 export function drawCalendar(options: DrawCalendarOptions) {
@@ -21,6 +35,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
     canvas,
     backgroundRect,
     calendarRect,
+    calendarColor = "#ffffff",
   } = options;  // Clear canvas
 
   const context = canvas.getContext('2d');
@@ -29,12 +44,14 @@ export function drawCalendar(options: DrawCalendarOptions) {
     context.drawImage(backgroundImage, backgroundRect.x, backgroundRect.y, backgroundRect.width, backgroundRect.height);
   }
 
+  //const shadowColor = isColorDark(calendarColor) ? "white" : "black";
+  const shadowColor = 'black';
   // Set text style
-  context.fillStyle = 'white';
-  context.strokeStyle = 'white';
+  context.fillStyle = calendarColor;
+  context.strokeStyle = calendarColor;
   context.textBaseline = 'middle';
   context.textAlign = 'center';
-  context.shadowColor = 'black';
+  context.shadowColor = shadowColor;
   context.shadowOffsetX = 1;
   context.shadowOffsetY = 0;
   context.shadowBlur = 4;

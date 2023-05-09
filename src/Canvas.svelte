@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type {ChangeEvent} from "rollup";
-  import { drawCalendar } from './calendar-drawer';
+  import { drawCalendar, isColorDark } from './calendar-drawer';
   import type { ImageRect } from './image-rect';
   import ImageMover from './ImageMover.svelte';
   import { currentSelectedImageStore } from './store';
@@ -17,6 +17,8 @@
   let selectedMonth = new Date().getMonth();
   let selectedYear = new Date().getFullYear();
   let boxSize = 100;
+  let calendarColor = "#FFFFFF";
+  let borderColor = '';
 
   let currentSelectedImage: ImageRect | undefined = undefined;
   let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0 };
@@ -38,6 +40,10 @@
       backgroundRect.height = canvasHeight;
       backgroundRect.width = canvasWidth;
     }
+  }
+
+  $: {
+    borderColor = isColorDark(calendarColor) ? 'transparent' : 'black';
   }
 
   $: {
@@ -81,6 +87,7 @@
           backgroundRect,
           firstDayOfWeek: 1,
           locale: 'en-GB',
+          calendarColor,
         });
         drawRequested = false;
       });
@@ -200,6 +207,8 @@
 
   .settings {
     display: flex;
+    gap: 4px;
+    align-items: center;
   }
 
   .canvas-container {
@@ -211,6 +220,24 @@
 
   canvas {
     z-index: 1;
+  }
+
+  .color-picker-container {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .calendar-color-picker {
+    display: none;
+  }
+
+  .color-display {
+    width: 24px;
+    height: 24px;
+    border-width: 1px;
+    border-style: solid;
+    margin-left: 4px;
   }
 </style>
 
@@ -243,6 +270,22 @@
 <div class="settings">
   <label for="boxSize">Box Size: </label>
   <input id="boxSize" type="number" min="50" bind:value={boxSize} on:input={() => updateBoxSize()} />
+
+  <label for="calendar-color-picker" class="color-picker-container">
+    Color:
+    <input
+      type="color"
+      bind:value="{calendarColor}"
+      on:input="{() => requestDrawCalendar()}"
+      class="calendar-color-picker"
+      id="calendar-color-picker"
+    />
+
+    <div
+      class="color-display"
+      style="background-color: {calendarColor}; border-color: {borderColor};"
+    />
+  </label>
 
   <label for="canvasWidth">Canvas Width: </label>
   <input id="canvasWidth" type="number" min="300" bind:value={canvasWidth} on:input={() => requestDrawCalendar()} />
