@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type {ChangeEvent} from "rollup";
   import { drawCalendar, isColorDark } from './calendar-drawer';
+  import { drawYearCalendar } from './calendar-year-drawer';
   import type { ImageRect } from './image-rect';
   import ImageMover from './ImageMover.svelte';
   import { currentSelectedImageStore } from './store';
@@ -13,7 +14,6 @@
   let canvasWidth = 0;
   let canvasHeight = 0;
   let selectedResolution: SelectedResolution | '' = 'auto';
-  let ctx: CanvasRenderingContext2D;
   let selectedMonth = new Date().getMonth();
   let selectedYear = new Date().getFullYear();
   let boxSize = 100;
@@ -119,6 +119,27 @@
     const link = document.createElement('a');
     link.href = dataUrl;
     link.download = 'calendar.png';
+    link.click();
+  }
+
+  function exportYear() {
+    const result = drawYearCalendar({
+      year: selectedYear,
+      boxSize,
+      backgroundImage,
+      backgroundRect,
+      calendarRect,
+      calendarColor,
+      firstDayOfWeek: 1,
+      cellHeight: canvasHeight,
+      cellSpacing: 5,
+      cellWidth: canvasWidth,
+    });
+
+    const dataUrl = result.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `calendar-year-${selectedYear}.png`;
     link.click();
   }
 
@@ -266,6 +287,7 @@
     {/each}
   </select>
   <button on:click={exportCalendar}>Export Calendar</button>
+  <button on:click={exportYear}>Export Year</button>
 </div>
 <div class="settings">
   <label for="boxSize">Box Size: </label>
