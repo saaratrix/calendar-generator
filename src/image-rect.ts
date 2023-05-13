@@ -3,4 +3,5 @@ export type ImageRect = {
   y: number;
   width: number;
   height: number;
+  type: 'calendar' | 'background';
 };

@@ -5,7 +5,8 @@
   import { drawYearCalendar } from './calendar-year-drawer';
   import type { ImageRect } from './image-rect';
   import ImageMover from './ImageMover.svelte';
-  import { currentSelectedImageStore } from './store';
+  import { boxSize, currentSelectedImageStore } from './store';
+  import ImageResizer from './ImageResizer.svelte';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
@@ -16,13 +17,12 @@
   let selectedResolution: SelectedResolution | '' = 'auto';
   let selectedMonth = new Date().getMonth();
   let selectedYear = new Date().getFullYear();
-  let boxSize = 100;
   let calendarColor = "#FFFFFF";
   let borderColor = '';
 
   let currentSelectedImage: ImageRect | undefined = undefined;
-  let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0 };
-  let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0 };
+  let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0, type: 'background' };
+  let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0, type: 'calendar' };
   const initialCalendarRect = { ...calendarRect };
 
   let drawRequested = false;
@@ -67,8 +67,13 @@
     updateCalendarRect();
     requestDrawCalendar();
 
+    const subscriptions = [
+      boxSize.subscribe(() => updateBoxSize()),
+    ];
+
     window.addEventListener('pointerup', trySelectImage);
     return () => {
+      subscriptions.forEach(subscription => subscription());
       window.removeEventListener('pointerup', trySelectImage);
     };
   });
@@ -80,7 +85,7 @@
         drawCalendar({
           month: selectedMonth,
           year: selectedYear,
-          boxSize,
+          boxSize: $boxSize,
           backgroundImage,
           canvas,
           calendarRect,
@@ -125,7 +130,7 @@
   function exportYear() {
     const result = drawYearCalendar({
       year: selectedYear,
-      boxSize,
+      boxSize: $boxSize,
       backgroundImage,
       backgroundRect,
       calendarRect,
@@ -161,14 +166,14 @@
   }
 
   function updateCalendarRect() {
-    calendarRect.width = boxSize * 7;
+    calendarRect.width = $boxSize * 7;
 
     const firstDayOfWeek = 1;
     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const firstDayOfWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay() - firstDayOfWeek;
     const rows = Math.ceil((daysInMonth + firstDayOfWeekIndex) / 7);
 
-    calendarRect.height = boxSize * (rows + 1);
+    calendarRect.height = $boxSize * (rows + 1);
   }
 
   function updateBoxSize() {
@@ -291,7 +296,7 @@
 </div>
 <div class="settings">
   <label for="boxSize">Box Size: </label>
-  <input id="boxSize" type="number" min="50" bind:value={boxSize} on:input={() => updateBoxSize()} />
+  <input id="boxSize" type="number" min="50" bind:value={$boxSize} />
 
   <label for="calendar-color-picker" class="color-picker-container">
     Color:
@@ -332,6 +337,9 @@
 
 <div class="canvas-container">
   <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
+  {#if currentSelectedImage?.type === 'calendar'}
+    <ImageResizer bind:imageRect={currentSelectedImage} />
+  {/if}
   <canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
 </div>
 
