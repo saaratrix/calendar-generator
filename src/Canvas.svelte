@@ -124,7 +124,16 @@
     const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = 'calendar.png';
+
+    // Get the current year and month
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Generate the filename
+    const filename = `${selectedYear}_${monthNames[selectedMonth]}.png`;
+    link.download = filename;
     link.click();
   }
 
@@ -145,7 +154,7 @@
     const dataUrl = result.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `calendar-year-${selectedYear}.png`;
+    link.download = `calendar-${selectedYear}.png`;
     link.click();
   }
 
