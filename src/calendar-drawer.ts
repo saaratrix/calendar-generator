@@ -1,9 +1,10 @@
 import type { ImageRect } from "./image-rect";
+import type { BoxSize } from './box-size';
 
 export interface DrawCalendarOptions {
   month: number;
   year: number;
-  boxSize: number;
+  boxSize: BoxSize;
   backgroundImage: HTMLImageElement;
   canvas: HTMLCanvasElement;
   backgroundRect: ImageRect;
@@ -65,7 +66,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
   let x = 0;
   let y = 0;
   const numCols = 7;
-  const totalCalendarWidth = boxSize * numCols;
+  const totalCalendarWidth = boxSize.width * numCols;
   const startX = calendarRect.x;
   let startY = calendarRect.y;
 
@@ -88,19 +89,19 @@ export function drawCalendar(options: DrawCalendarOptions) {
   const weekdaysHeight = monthYearHeight;
 
   for (let col = 0; col < 7; col++) {
-    const x = startX + col * boxSize;
-    context.fillText(weekdays[col], x + boxSize / 2, startY + weekdaysHeight);
+    const x = startX + col * boxSize.width;
+    context.fillText(weekdays[col], x + boxSize.width / 2, startY + weekdaysHeight);
   }
 
   startY += weekdaysHeight * 2;
   context.font = '16px Arial';
   // Iterate through weeks (rows)
   for (let week = 0; week < 6; week++) {
-    y = week * boxSize + startY;
+    y = week * boxSize.height + startY;
 
     // Iterate through days (columns)
     for (let day = 0; day < 7; day++) {
-      x = startX + day * boxSize;
+      x = startX + day * boxSize.width;
 
       if (week === 0 && day < startDay || date > daysInMonth) {
         // Skip empty cells before the start of the month or after the end of the month
@@ -108,10 +109,10 @@ export function drawCalendar(options: DrawCalendarOptions) {
       }
 
       // Draw the date box
-      context.strokeRect(x, y, boxSize, boxSize);
+      context.strokeRect(x, y, boxSize.width, boxSize.height);
 
       // Draw the date number
-      context.fillText(date.toString(), x + boxSize / 2, y + monthYearHeight);
+      context.fillText(date.toString(), x + boxSize.width / 2, y + monthYearHeight);
 
       date++;
     }

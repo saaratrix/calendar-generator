@@ -1,19 +1,23 @@
 <script lang="ts">
   import { updateBoxSize, boxSize } from './store';
   import type { ImageRect } from './image-rect';
+  import type { BoxSize } from './box-size';
+  import { calculateCalendarHeight, calculateRows } from './utils';
 
   export let imageRect: ImageRect;
+  export let selectedYear: number;
+  export let selectedMonth: number;
 
   let resizing = false;
   let startX: number;
   let startY: number;
-  let initialBoxSize: number;
+  let initialBoxSize: BoxSize;
 
   function handlePointerDown(event: PointerEvent) {
     resizing = true;
     startX = event.clientX;
     startY = event.clientY;
-    initialBoxSize = $boxSize;
+    initialBoxSize = { width: $boxSize.width, height: $boxSize.height };
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
@@ -25,11 +29,17 @@
 
     const deltaX = event.clientX - startX;
     const deltaY = event.clientY - startY;
-    const newWidth = initialBoxSize * 7 + deltaX;
-    const newBoxSize = newWidth / 7;
+    const newWidth = initialBoxSize.width * 7 + deltaX;
+    const newBoxSizeWidth = newWidth / 7;
 
-    updateBoxSize(newBoxSize);
-    console.log(deltaX, newBoxSize);
+    const calendarHeight = calculateCalendarHeight(initialBoxSize.height, selectedYear, selectedMonth, 1) + deltaY;
+    const rows = calculateRows(selectedYear, selectedMonth, 1);
+    const newBoxSizeHeight = calendarHeight / (rows + 1);
+
+    updateBoxSize({
+      width: newBoxSizeWidth,
+      height: newBoxSizeHeight,
+    });
   }
 
   function handlePointerUp(event: PointerEvent) {

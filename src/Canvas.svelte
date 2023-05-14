@@ -7,6 +7,7 @@
   import ImageMover from './ImageMover.svelte';
   import { boxSize, currentSelectedImageStore } from './store';
   import ImageResizer from './ImageResizer.svelte';
+  import { calculateCalendarHeight, calculateRows } from './utils';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
@@ -166,14 +167,13 @@
   }
 
   function updateCalendarRect() {
-    calendarRect.width = $boxSize * 7;
+    calendarRect.width = $boxSize.width * 7;
 
-    const firstDayOfWeek = 1;
-    const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    const firstDayOfWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay() - firstDayOfWeek;
-    const rows = Math.ceil((daysInMonth + firstDayOfWeekIndex) / 7);
-
-    calendarRect.height = $boxSize * (rows + 1);
+    // const firstDayOfWeek = 1;
+    // const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    // const firstDayOfWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay() - firstDayOfWeek;
+    // const rows = Math.ceil((daysInMonth + firstDayOfWeekIndex) / 7);
+    calendarRect.height = calculateCalendarHeight($boxSize.height, selectedYear, selectedMonth, 1);
   }
 
   function updateBoxSize() {
@@ -295,8 +295,10 @@
   <button on:click={exportYear}>Export Year</button>
 </div>
 <div class="settings">
-  <label for="boxSize">Box Size: </label>
-  <input id="boxSize" type="number" min="50" bind:value={$boxSize} />
+  <label for="boxSizeWidth">Calendar Width: </label>
+  <input id="boxSizeWidth" type="number" min="50" bind:value={$boxSize.width} />
+  <label for="boxSizeHeight">Calendar Height: </label>
+  <input id="boxSizeHeight" type="number" min="50" bind:value={$boxSize.height} />
 
   <label for="calendar-color-picker" class="color-picker-container">
     Color:
@@ -338,7 +340,7 @@
 <div class="canvas-container">
   <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
   {#if currentSelectedImage?.type === 'calendar'}
-    <ImageResizer bind:imageRect={currentSelectedImage} />
+    <ImageResizer bind:imageRect={currentSelectedImage} bind:selectedYear={selectedYear} bind:selectedMonth={selectedMonth} />
   {/if}
   <canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
 </div>

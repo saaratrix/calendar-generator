@@ -1,9 +1,10 @@
 import { drawCalendar } from './calendar-drawer';
 import type { ImageRect } from './image-rect';
+import type { BoxSize } from './box-size';
 
 export interface DrawYearCalendarOptions {
   year: number;
-  boxSize: number;
+  boxSize: BoxSize;
   backgroundImage: HTMLImageElement;
   calendarColor: string;
   firstDayOfWeek: number;
