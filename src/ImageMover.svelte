@@ -85,6 +85,7 @@
     position: absolute;
     z-index: 9999;
     --border-size: 4;
+    cursor: grab;
   }
 
   rect.dashed-main {

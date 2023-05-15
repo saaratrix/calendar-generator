@@ -17,6 +17,12 @@ export interface DrawCalendarOptions {
   calendarColor?: string;
 }
 
+const MINIMUM_BORDER_THICKNESS = 1;
+const MAXIMUM_BORDER_THICKNESS = 5;
+
+const MINIMUM_FONT = 16;
+const MAXIMUM_FONT = 32;
+
 // Chat GPT says this is based off this: https://en.wikipedia.org/wiki/Rec._709
 export function isColorDark(color: string): boolean {
   const rgb = parseInt(color.replace("#", ""), 16);
@@ -45,7 +51,10 @@ export function drawCalendar(options: DrawCalendarOptions) {
     context.drawImage(backgroundImage, backgroundRect.x, backgroundRect.y, backgroundRect.width, backgroundRect.height);
   }
 
-  //const shadowColor = isColorDark(calendarColor) ? "white" : "black";
+  // Calculate border thickness based on box size
+  const borderThickness = Math.max(Math.min(0.01 * boxSize.width, MAXIMUM_BORDER_THICKNESS), MINIMUM_BORDER_THICKNESS);
+  const fontSize = MINIMUM_FONT;//Math.max(Math.min(boxSize.width / 100 * 16, MAXIMUM_FONT), MINIMUM_FONT);
+
   const shadowColor = 'black';
   // Set text style
   context.fillStyle = calendarColor;
@@ -56,6 +65,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
   context.shadowOffsetX = 1;
   context.shadowOffsetY = 0;
   context.shadowBlur = 4;
+  context.lineWidth = borderThickness;
 
   // Calculate the starting day and number of days in the month
   let startDay = new Date(year, month, 1).getDay() - 1; // Subtract 1 to start from Monday
@@ -78,13 +88,13 @@ export function drawCalendar(options: DrawCalendarOptions) {
   ];
 
   const monthYearText = `${monthNames[month]} - ${year}`;
-  context.font = 'bold 20px Arial';
+  context.font = `bold ${fontSize + 4}px Arial`;
   const monthYearTextMeasure = context.measureText(monthYearText);
   const monthYearTextX = startX + totalCalendarWidth / 2;
   const monthYearHeight = monthYearTextMeasure.actualBoundingBoxAscent + monthYearTextMeasure.actualBoundingBoxDescent;
   context.fillText(monthYearText, monthYearTextX, startY + monthYearHeight);
 
-  context.font = 'bold 16px Arial';
+  context.font = `bold ${fontSize}px Arial`;
   startY += monthYearHeight * 1.5;
   const weekdaysHeight = monthYearHeight;
 
@@ -94,7 +104,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
   }
 
   startY += weekdaysHeight * 2;
-  context.font = '16px Arial';
+  context.font = `${fontSize}px Arial`;
   // Iterate through weeks (rows)
   for (let week = 0; week < 6; week++) {
     y = week * boxSize.height + startY;
