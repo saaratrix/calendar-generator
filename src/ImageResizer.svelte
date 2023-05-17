@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { updateBoxSize, boxSize } from './store';
+  import { updateBoxSize, boxSize, selectedYear, selectedMonth } from './store';
   import type { ImageRect } from './image-rect';
   import type { BoxSize } from './box-size';
   import { calculateCalendarHeight, calculateRows } from './utils';
 
   export let imageRect: ImageRect;
-  export let selectedYear: number;
-  export let selectedMonth: number;
 
   let resizing = false;
   let startX: number;
@@ -32,8 +30,8 @@
     const newWidth = initialBoxSize.width * 7 + deltaX;
     const newBoxSizeWidth = newWidth / 7;
 
-    const calendarHeight = calculateCalendarHeight(initialBoxSize.height, selectedYear, selectedMonth, 1) + deltaY;
-    const rows = calculateRows(selectedYear, selectedMonth, 1);
+    const calendarHeight = calculateCalendarHeight(initialBoxSize.height, $selectedYear, $selectedMonth, 1) + deltaY;
+    const rows = calculateRows($selectedYear, $selectedMonth, 1);
     const newBoxSizeHeight = calendarHeight / (rows + 1);
 
     updateBoxSize({

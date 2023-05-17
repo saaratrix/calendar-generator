@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type {ChangeEvent} from "rollup";
   import { drawCalendar, isColorDark } from './calendar-drawer';
   import { drawYearCalendar } from './calendar-year-drawer';
   import type { ImageRect } from './image-rect';
   import ImageMover from './ImageMover.svelte';
-  import { boxSize, currentSelectedImageStore } from './store';
+  import { boxSize, currentSelectedImageStore, selectedMonth, selectedYear } from './store';
   import ImageResizer from './ImageResizer.svelte';
   import { calculateCalendarHeight, calculateRows } from './utils';
+  import { monthNames } from './constants';
+  import MonthSelection from './MonthSelection.svelte';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
@@ -16,8 +18,6 @@
   let canvasWidth = 0;
   let canvasHeight = 0;
   let selectedResolution: SelectedResolution | '' = 'auto';
-  let selectedMonth = new Date().getMonth();
-  let selectedYear = new Date().getFullYear();
   let calendarColor = "#FFFFFF";
   let borderColor = '';
 
@@ -70,6 +70,8 @@
 
     const subscriptions = [
       boxSize.subscribe(() => updateBoxSize()),
+      selectedYear.subscribe(() => onMonthYearChange()),
+      selectedMonth.subscribe(() => onMonthYearChange()),
     ];
 
     window.addEventListener('pointerup', trySelectImage);
@@ -79,13 +81,17 @@
     };
   });
 
+  onDestroy(() => {
+
+  });
+
   function requestDrawCalendar() {
     if (!drawRequested) {
       drawRequested = true;
       requestAnimationFrame(() => {
         drawCalendar({
-          month: selectedMonth,
-          year: selectedYear,
+          month: $selectedMonth,
+          year: $selectedYear,
           boxSize: $boxSize,
           backgroundImage,
           canvas,
@@ -125,12 +131,6 @@
     const link = document.createElement('a');
     link.href = dataUrl;
 
-    // Get the current year and month
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
     // Generate the filename
     const filename = `${selectedYear}_${monthNames[selectedMonth]}.png`;
     link.download = filename;
@@ -139,7 +139,7 @@
 
   function exportYear() {
     const result = drawYearCalendar({
-      year: selectedYear,
+      year: $selectedYear,
       boxSize: $boxSize,
       backgroundImage,
       backgroundRect,
@@ -177,12 +177,7 @@
 
   function updateCalendarRect() {
     calendarRect.width = $boxSize.width * 7;
-
-    // const firstDayOfWeek = 1;
-    // const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-    // const firstDayOfWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay() - firstDayOfWeek;
-    // const rows = Math.ceil((daysInMonth + firstDayOfWeekIndex) / 7);
-    calendarRect.height = calculateCalendarHeight($boxSize.height, selectedYear, selectedMonth, 1);
+    calendarRect.height = calculateCalendarHeight($boxSize.height, $selectedYear, $selectedMonth, 1);
   }
 
   function updateBoxSize() {
@@ -280,26 +275,8 @@
 
 <div class="settings">
   <input type="file" accept="image/*" on:input={handleFileUpload} />
-
-  <select bind:value={selectedMonth} on:change={onMonthYearChange}>
-    <option value={0}>January</option>
-    <option value={1}>February</option>
-    <option value={2}>March</option>
-    <option value={3}>April</option>
-    <option value={4}>May</option>
-    <option value={5}>June</option>
-    <option value={6}>July</option>
-    <option value={7}>August</option>
-    <option value={8}>September</option>
-    <option value={9}>October</option>
-    <option value={10}>November</option>
-    <option value={11}>December</option>
-  </select>
-  <select bind:value={selectedYear} on:change={onMonthYearChange}>
-    {#each Array.from({length: 11}, (_, i) => new Date().getFullYear() - 5 + i) as year}
-      <option value={year}>{year}</option>
-    {/each}
-  </select>
+  <MonthSelection on:monthChanged={onMonthYearChange()} />
+  <input type="number" min="1" bind:value={$selectedYear} />
   <button on:click={exportCalendar}>Export Calendar</button>
   <button on:click={exportYear}>Export Year</button>
 </div>
@@ -349,7 +326,7 @@
 <div class="canvas-container">
   <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
   {#if currentSelectedImage?.type === 'calendar'}
-    <ImageResizer bind:imageRect={currentSelectedImage} bind:selectedYear={selectedYear} bind:selectedMonth={selectedMonth} />
+    <ImageResizer bind:imageRect={currentSelectedImage} />
   {/if}
   <canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
 </div>
