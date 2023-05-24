@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { updateBoxSize, boxSize, selectedYear, selectedMonth } from './store';
+  import { currentMonthItem, selectedYear, selectedMonth, updateMonthProperty } from './store';
   import type { ImageRect } from './image-rect';
   import type { BoxSize } from './box-size';
   import { calculateCalendarHeight, calculateRows } from './utils';
@@ -15,7 +15,7 @@
     resizing = true;
     startX = event.clientX;
     startY = event.clientY;
-    initialBoxSize = { width: $boxSize.width, height: $boxSize.height };
+    initialBoxSize = { width: $currentMonthItem.boxSize.value.width, height: $currentMonthItem.boxSize.value.height };
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
@@ -34,10 +34,10 @@
     const rows = calculateRows($selectedYear, $selectedMonth, 1);
     const newBoxSizeHeight = calendarHeight / (rows + 1);
 
-    updateBoxSize({
+    updateMonthProperty('boxSize', {
       width: newBoxSizeWidth,
       height: newBoxSizeHeight,
-    });
+    })
   }
 
   function handlePointerUp(event: PointerEvent) {

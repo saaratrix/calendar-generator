@@ -1,5 +1,3 @@
-import { boxSize } from './store';
-
 export function download(dataUrl: string, filename: string) {
   const link = document.createElement('a');
   link.download = filename;

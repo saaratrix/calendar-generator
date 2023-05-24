@@ -1,1 +1,2 @@
 export const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+export const initialCalendarRect = Object.freeze({ x: 25, y: 0, width: 0, height: 0, type: 'calendar' });

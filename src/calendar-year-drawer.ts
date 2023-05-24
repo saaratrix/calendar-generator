@@ -1,15 +1,10 @@
 import { drawCalendar } from './calendar-drawer';
-import type { ImageRect } from './image-rect';
-import type { BoxSize } from './box-size';
+import type { Month } from './month';
 
 export interface DrawYearCalendarOptions {
   year: number;
-  boxSize: BoxSize;
-  backgroundImage: HTMLImageElement;
-  calendarColor: string;
+  months: Month[],
   firstDayOfWeek: number;
-  backgroundRect: ImageRect;
-  calendarRect: ImageRect;
   cellWidth: number;
   cellHeight: number;
   cellSpacing: number;
@@ -18,12 +13,8 @@ export interface DrawYearCalendarOptions {
 export function drawYearCalendar(options: DrawYearCalendarOptions): HTMLCanvasElement {
   const {
     year,
-    boxSize,
-    backgroundImage,
-    calendarColor,
+    months,
     firstDayOfWeek,
-    backgroundRect,
-    calendarRect,
     cellWidth,
     cellHeight,
     cellSpacing,
@@ -40,17 +31,13 @@ export function drawYearCalendar(options: DrawYearCalendarOptions): HTMLCanvasEl
 
   for (let quarter = 0; quarter < 4; quarter++) {
     for (let monthInQuarter = 0; monthInQuarter < 3; monthInQuarter++) {
-      const month = quarter * 3 + monthInQuarter;
+      const monthIndex = quarter * 3 + monthInQuarter;
 
       drawCalendar({
-        month,
+        monthIndex,
+        month: months[monthIndex],
         year,
-        boxSize,
-        backgroundImage,
         canvas: monthCanvas,
-        backgroundRect,
-        calendarRect,
-        calendarColor,
         firstDayOfWeek,
       });
 

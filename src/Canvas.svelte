@@ -1,57 +1,31 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import type {ChangeEvent} from "rollup";
-  import { drawCalendar, isColorDark } from './calendar-drawer';
+  import { onMount } from 'svelte';
+  import { drawCalendar } from './calendar-drawer';
   import { drawYearCalendar } from './calendar-year-drawer';
   import type { ImageRect } from './image-rect';
   import ImageMover from './ImageMover.svelte';
-  import { boxSize, currentSelectedImageStore, selectedMonth, selectedYear } from './store';
+  import {
+    currentSelectedImageStore,
+    selectedMonth,
+    selectedYear,
+    months,
+    currentMonthItem,
+    backgroundImageLoaded,
+    canvasWidth,
+    canvasHeight, updateMonthProperty, defaultMonthData,
+  } from './store';
   import ImageResizer from './ImageResizer.svelte';
-  import { calculateCalendarHeight, calculateRows } from './utils';
-  import { monthNames } from './constants';
-  import MonthSelection from './MonthSelection.svelte';
+  import { initialCalendarRect, monthNames } from './constants';
+  import MonthValuesEditor from './MonthValuesEditor.svelte';
 
   type SelectedResolution = `${number}x${number}` | 'auto';
 
-  let backgroundImage: HTMLImageElement;
   let canvas: HTMLCanvasElement;
-  let canvasWidth = 0;
-  let canvasHeight = 0;
   let selectedResolution: SelectedResolution | '' = 'auto';
-  let calendarColor = "#FFFFFF";
-  let borderColor = '';
 
   let currentSelectedImage: ImageRect | undefined = undefined;
-  let backgroundRect: ImageRect = { x: 0, y: 0, width: 0, height: 0, type: 'background' };
-  let calendarRect: ImageRect = { x: 25, y: 0, width: 0, height: 0, type: 'calendar' };
-  const initialCalendarRect = { ...calendarRect };
 
   let drawRequested = false;
-
-  $: {
-    if (canvas && canvasWidth !== 0 && canvasHeight !== 0) {
-      requestDrawCalendar();
-    }
-  }
-
-  $: {
-    if (canvas) {
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      backgroundRect.height = canvasHeight;
-      backgroundRect.width = canvasWidth;
-    }
-  }
-
-  $: {
-    borderColor = isColorDark(calendarColor) ? 'transparent' : 'black';
-  }
-
-  $: {
-    if (backgroundRect || calendarRect) {
-      currentSelectedImageStore.set(currentSelectedImage);
-    }
-  }
 
   $: {
     if (currentSelectedImage) {
@@ -60,19 +34,30 @@
   }
 
   onMount(() => {
-    // const initialResolution = findNearestResolution(window.innerWidth, window.innerHeight);
-    // canvasWidth = initialResolution.width;
-    // canvasHeight = initialResolution.height;
-    // selectedResolution = `${canvasWidth}x${canvasHeight}` as SelectedResolution;
-    // ctx = canvas.getContext('2d');
-    updateCalendarRect();
-    requestDrawCalendar();
-
     const subscriptions = [
-      boxSize.subscribe(() => updateBoxSize()),
       selectedYear.subscribe(() => onMonthYearChange()),
-      selectedMonth.subscribe(() => onMonthYearChange()),
+      currentMonthItem.subscribe(() => {
+        onMonthYearChange();
+        updateCurrentSelectedImage();
+      }),
+      backgroundImageLoaded.subscribe(() => updateCanvasSize()),
+      canvasWidth.subscribe(() => {
+        const rect = $currentMonthItem.backgroundRect.value;
+        rect.width = $canvasWidth;
+        updateMonthProperty('backgroundRect', rect);
+        requestDrawCalendar();
+      }),
+      canvasHeight.subscribe(() => {
+        const rect = $currentMonthItem.backgroundRect.value;
+        rect.height = $canvasHeight;
+        updateMonthProperty('backgroundRect', rect);
+        requestDrawCalendar();
+      }),
     ];
+
+    selectedMonth.set(new Date().getMonth());
+
+    requestDrawCalendar();
 
     window.addEventListener('pointerup', trySelectImage);
     return () => {
@@ -81,49 +66,23 @@
     };
   });
 
-  onDestroy(() => {
-
-  });
-
   function requestDrawCalendar() {
     if (!drawRequested) {
       drawRequested = true;
       requestAnimationFrame(() => {
-        drawCalendar({
-          month: $selectedMonth,
-          year: $selectedYear,
-          boxSize: $boxSize,
-          backgroundImage,
-          canvas,
-          calendarRect,
-          backgroundRect,
-          firstDayOfWeek: 1,
-          locale: 'en-GB',
-          calendarColor,
-        });
+        if ($canvasWidth !== 0 && $canvasHeight !== 0) {
+          drawCalendar({
+            monthIndex: $selectedMonth,
+            year: $selectedYear,
+            month: $currentMonthItem,
+            canvas,
+            firstDayOfWeek: 1,
+            locale: 'en-GB',
+          });
+        }
         drawRequested = false;
       });
     }
-  }
-
-  function handleFileUpload(e: ChangeEvent) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      backgroundImage = new Image();
-      backgroundImage.src = event.target.result as string;
-      backgroundImage.onload = () => onBackgroundImageLoad();
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  // When the background image is loaded, update backgroundRect
-  function onBackgroundImageLoad() {
-    updateCanvasSize();
-    backgroundRect.height = canvasHeight;
-    backgroundRect.width = canvasWidth;
   }
 
   function exportCalendar() {
@@ -140,15 +99,11 @@
   function exportYear() {
     const result = drawYearCalendar({
       year: $selectedYear,
-      boxSize: $boxSize,
-      backgroundImage,
-      backgroundRect,
-      calendarRect,
-      calendarColor,
+      months: $months,
       firstDayOfWeek: 1,
-      cellHeight: canvasHeight,
+      cellHeight: $canvasHeight,
+      cellWidth: $canvasWidth,
       cellSpacing: 5,
-      cellWidth: canvasWidth,
     });
 
     const dataUrl = result.toDataURL('image/png');
@@ -162,31 +117,35 @@
     requestDrawCalendar();
   }
 
+  function updateCurrentSelectedImage() {
+    if (!currentSelectedImage) {
+      currentSelectedImageStore.set(currentSelectedImage);
+      return;
+    }
+
+    let newReference = currentSelectedImage.type === 'background' ? $currentMonthItem.backgroundRect.value : $currentMonthItem.calendarRect.value;
+    currentSelectedImage = newReference;
+    currentSelectedImageStore.set(currentSelectedImage);
+  }
+
   function updateCanvasSize() {
     if (selectedResolution === "auto") {
+      const backgroundImage = $currentMonthItem.backgroundImage.value;
       if (backgroundImage) {
-        canvasWidth = backgroundImage.naturalWidth;
-        canvasHeight = backgroundImage.naturalHeight;
+        canvasWidth.set(backgroundImage.naturalWidth);
+        canvasHeight.set(backgroundImage.naturalHeight);
       }
     } else {
       const [width, height] = selectedResolution.split("x").map(Number);
-      canvasWidth = width;
-      canvasHeight = height;
+      canvasWidth.set(width);
+      canvasHeight.set(height);
     }
-  }
-
-  function updateCalendarRect() {
-    calendarRect.width = $boxSize.width * 7;
-    calendarRect.height = calculateCalendarHeight($boxSize.height, $selectedYear, $selectedMonth, 1);
-  }
-
-  function updateBoxSize() {
-    updateCalendarRect();
-    requestDrawCalendar();
   }
 
   function trySelectImage(event: MouseEvent) {
     const canvasRect = canvas.getBoundingClientRect();
+    const calendarRect = $currentMonthItem.calendarRect.value;
+    const backgroundRect = $currentMonthItem.backgroundRect.value;
     const x = event.pageX - canvasRect.left - window.scrollX;
     const y = event.pageY - canvasRect.top - window.scrollY;
 
@@ -222,11 +181,17 @@
   }
 
   function resetRects() {
+    const calendarRect = $currentMonthItem.calendarRect.value;
+    const backgroundRect = $currentMonthItem.backgroundRect.value;
+
     calendarRect.x = initialCalendarRect.x;
     calendarRect.y = initialCalendarRect.y;
 
     backgroundRect.x = 0;
     backgroundRect.y = 0;
+
+    updateMonthProperty('calendarRect', calendarRect);
+    updateMonthProperty('backgroundRect', backgroundRect);
 
     requestDrawCalendar();
   }
@@ -271,42 +236,17 @@
   }
 </style>
 
-
-
 <div class="settings">
-  <input type="file" accept="image/*" on:input={handleFileUpload} />
-  <MonthSelection on:monthChanged={onMonthYearChange()} />
   <input type="number" min="1" bind:value={$selectedYear} />
   <button on:click={exportCalendar}>Export Calendar</button>
   <button on:click={exportYear}>Export Year</button>
 </div>
 <div class="settings">
-  <label for="boxSizeWidth">Calendar Width: </label>
-  <input id="boxSizeWidth" type="number" min="50" bind:value={$boxSize.width} />
-  <label for="boxSizeHeight">Calendar Height: </label>
-  <input id="boxSizeHeight" type="number" min="50" bind:value={$boxSize.height} />
-
-  <label for="calendar-color-picker" class="color-picker-container">
-    Color:
-    <input
-      type="color"
-      bind:value="{calendarColor}"
-      on:input="{() => requestDrawCalendar()}"
-      class="calendar-color-picker"
-      id="calendar-color-picker"
-    />
-
-    <div
-      class="color-display"
-      style="background-color: {calendarColor}; border-color: {borderColor};"
-    />
-  </label>
-
   <label for="canvasWidth">Canvas Width: </label>
-  <input id="canvasWidth" type="number" min="300" bind:value={canvasWidth} on:input={() => requestDrawCalendar()} />
+  <input id="canvasWidth" type="number" min="300" bind:value={$canvasWidth} on:input={() => requestDrawCalendar()} />
 
   <label for="canvasHeight">Canvas Height: </label>
-  <input id="canvasHeight" type="number" min="300" bind:value={canvasHeight} on:input={() => requestDrawCalendar()} />
+  <input id="canvasHeight" type="number" min="300" bind:value={$canvasHeight} on:input={() => requestDrawCalendar()} />
 
   <select bind:value={selectedResolution} on:change={() => updateCanvasSize()}>
     <option value="auto">Fit to background image</option>
@@ -322,13 +262,16 @@
 
   <button on:click={resetRects}>Reset Rects</button>
 </div>
+<div class="settings">
+  <MonthValuesEditor />
+</div>
 
 <div class="canvas-container">
   <ImageMover bind:currentSelectedImage="{currentSelectedImage}" on:imageMoved="{() => { requestDrawCalendar()}}" />
   {#if currentSelectedImage?.type === 'calendar'}
     <ImageResizer bind:imageRect={currentSelectedImage} />
   {/if}
-  <canvas bind:this={canvas} width={canvasWidth} height={canvasHeight}></canvas>
+  <canvas bind:this={canvas} width={$canvasWidth} height={$canvasHeight}></canvas>
 </div>
 
 

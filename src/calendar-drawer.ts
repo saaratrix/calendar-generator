@@ -1,14 +1,12 @@
 import type { ImageRect } from "./image-rect";
 import type { BoxSize } from './box-size';
+import type { Month } from './month';
 
 export interface DrawCalendarOptions {
-  month: number;
   year: number;
-  boxSize: BoxSize;
-  backgroundImage: HTMLImageElement;
+  monthIndex: number;
+  month: Month,
   canvas: HTMLCanvasElement;
-  backgroundRect: ImageRect;
-  calendarRect: ImageRect;
   firstDayOfWeek?: number;
   locale?: string;
   /**
@@ -35,15 +33,18 @@ export function isColorDark(color: string): boolean {
 
 export function drawCalendar(options: DrawCalendarOptions) {
   const {
-    month,
+    monthIndex,
     year,
-    boxSize,
-    backgroundImage,
     canvas,
-    backgroundRect,
-    calendarRect,
-    calendarColor = "#ffffff",
   } = options;  // Clear canvas
+
+  const {
+    boxSize: {value: boxSize},
+    calendarColor: {value: calendarColor = "#ffffff"},
+    backgroundImage: {value: backgroundImage},
+    backgroundRect: {value: backgroundRect},
+    calendarRect: {value: calendarRect},
+  } = options.month;
 
   const context = canvas.getContext('2d');
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -68,9 +69,9 @@ export function drawCalendar(options: DrawCalendarOptions) {
   context.lineWidth = borderThickness;
 
   // Calculate the starting day and number of days in the month
-  let startDay = new Date(year, month, 1).getDay() - 1; // Subtract 1 to start from Monday
+  let startDay = new Date(year, monthIndex, 1).getDay() - 1; // Subtract 1 to start from Monday
   startDay = startDay === -1 ? 6 : startDay; // If startDay is -1 (Sunday), set it to 6
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
   let date = 1;
   let x = 0;
@@ -87,7 +88,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const monthYearText = `${monthNames[month]} - ${year}`;
+  const monthYearText = `${monthNames[monthIndex]} - ${year}`;
   context.font = `bold ${fontSize + 4}px Arial`;
   const monthYearTextMeasure = context.measureText(monthYearText);
   const monthYearTextX = startX + totalCalendarWidth / 2;
