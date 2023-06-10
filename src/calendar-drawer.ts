@@ -92,7 +92,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
   context.font = `bold ${fontSize + 4}px Arial`;
   const monthYearTextMeasure = context.measureText(monthYearText);
   const monthYearTextX = startX + totalCalendarWidth / 2;
-  const monthYearHeight = monthYearTextMeasure.actualBoundingBoxAscent + monthYearTextMeasure.actualBoundingBoxDescent;
+  const monthYearHeight = monthYearTextMeasure.fontBoundingBoxAscent + monthYearTextMeasure.fontBoundingBoxDescent;;
   context.fillText(monthYearText, monthYearTextX, startY + monthYearHeight);
 
   context.font = `bold ${fontSize}px Arial`;
