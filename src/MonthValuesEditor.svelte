@@ -45,8 +45,8 @@
 
   function onCurrentMonthChanged(item: Month): void {
     calendarColor = item.calendarColor.value;
-    boxSize = item.boxSize.value;
-    backgroundImage: item.backgroundImage.value;
+    boxSize = { ...item.boxSize.value };
+    backgroundImage = item.backgroundImage.value;
   }
 
   function handleFileUpload(e: InputEvent) {
@@ -75,7 +75,7 @@
   }
 
   function boxSizeChanged() {
-    updateMonthProperty('boxSize', boxSize);
+    updateMonthProperty('boxSize', { ...boxSize });
     updateCalendarRect();
   };
 
@@ -85,7 +85,7 @@
     calendarRect.width = boxSize.width * 7;
     calendarRect.height = calculateCalendarHeight(boxSize.height, $selectedYear, $selectedMonth, 1);
 
-    updateMonthProperty('calendarRect', calendarRect);
+    updateMonthProperty('calendarRect', { ...calendarRect });
   }
 
 </script>

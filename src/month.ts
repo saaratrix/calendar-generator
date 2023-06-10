@@ -21,3 +21,5 @@ export type MonthPropertyTypeMap = {
   calendarColor: string;
   boxSize: BoxSize;
 };
+
+export type MonthProperty = keyof MonthPropertyTypeMap;

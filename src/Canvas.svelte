@@ -12,7 +12,7 @@
     currentMonthItem,
     backgroundImageLoaded,
     canvasWidth,
-    canvasHeight, updateMonthProperty, defaultMonthData,
+    canvasHeight, updateMonthProperty,
   } from './store';
   import ImageResizer from './ImageResizer.svelte';
   import { initialCalendarRect, monthNames } from './constants';

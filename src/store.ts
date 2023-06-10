@@ -10,16 +10,17 @@ export const currentSelectedImageStore = writable<ImageRect>(undefined);
 export const canvasWidth = writable<number>(0);
 export const canvasHeight = writable<number>(0);
 
-export const defaultMonthData: Month = {
-  backgroundImage: { value: null, isDirty: false },
-  backgroundRect: { value: { x: 0, y: 0, width: 0, height: 0, type: 'background' }, isDirty: false },
-  calendarRect: { value: { ...initialCalendarRect }, isDirty: false },
-  calendarColor: { value: "#ffffff", isDirty: false },
-  boxSize: { value: { width: 100, height: 100 }, isDirty: false },
-};
+function cloneDefaultMonthData(): Month {
+  return {
+    backgroundImage: { value: null, isDirty: false },
+    backgroundRect: { value: { x: 0, y: 0, width: 0, height: 0, type: 'background' }, isDirty: false },
+    calendarRect: { value: { ...initialCalendarRect }, isDirty: false },
+    calendarColor: { value: "#ffffff", isDirty: false },
+    boxSize: { value: { width: 100, height: 100 }, isDirty: false },
+  };
+}
 
-export const months = writable<Month[]>(Array(12).fill(defaultMonthData));
-
+export const months = writable<Month[]>(Array(12).fill(null).map(() => cloneDefaultMonthData()));
 export const selectedMonth = writable<number>(new Date().getMonth());
 export const selectedYear = writable<number>(new Date().getFullYear());
 
@@ -40,10 +41,6 @@ export function updateMonthProperty<T extends keyof MonthPropertyTypeMap>(
     currentMonth[property].isDirty = true;
 
     months.forEach(month => {
-      if (month === currentMonth) {
-        return;
-      }
-
       if (month[property].isDirty) {
         return;
       }

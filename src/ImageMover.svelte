@@ -1,7 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
   import type { ImageRect } from "./image-rect";
-  import { currentSelectedImageStore } from './store';
+  import { currentSelectedImageStore, updateMonthProperty } from './store';
+  import type { MonthProperty, MonthPropertyTypeMap } from './month';
 
   interface ImageMovedEvent {
     imageMoved: ImageRect;
@@ -14,7 +15,6 @@
     currentSelectedImage = value;
   });
 
-  let rafInProgress = false;
   let startX = 0;
   let startY = 0;
   let isMoving = false;
@@ -42,6 +42,13 @@
     if (!isMoving) return;
     const dx = event.clientX - startX;
     const dy = event.clientY - startY;
+
+    const newValue = {
+      ...currentSelectedImage,
+      x: currentSelectedImage.x + dx,
+      y: currentSelectedImage.y + dy,
+    };
+
     currentSelectedImage.x += dx;
     currentSelectedImage.y += dy;
     startX = event.clientX;
@@ -51,13 +58,8 @@
       hasMoved = true;
     }
 
-    if (rafInProgress) return;
-
-    rafInProgress = true;
-    requestAnimationFrame(() => {
-      rafInProgress = false;
-      dispatch('imageMoved', currentSelectedImage);
-    });
+    const property : MonthProperty = newValue.type === 'calendar' ? 'calendarRect' : 'backgroundRect';
+    updateMonthProperty(property, newValue);
   }
 
   function onPointerUp(event: PointerEvent  ) {

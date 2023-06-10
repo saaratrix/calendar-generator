@@ -37,7 +37,7 @@
     updateMonthProperty('boxSize', {
       width: newBoxSizeWidth,
       height: newBoxSizeHeight,
-    })
+    });
   }
 
   function handlePointerUp(event: PointerEvent) {
