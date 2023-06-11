@@ -1,5 +1,6 @@
 import type { ImageRect } from './image-rect';
 import type { BoxSize } from './box-size';
+import type { ImageFitOption } from './image-fit-option';
 
 interface DirtyValue<T> {
   value: T;
@@ -12,6 +13,7 @@ export type Month = {
   calendarRect: DirtyValue<ImageRect>;
   calendarColor: DirtyValue<string>;
   boxSize: DirtyValue<BoxSize>;
+  imageFitOption: DirtyValue<ImageFitOption>;
 }
 
 export type MonthPropertyTypeMap = {
@@ -20,6 +22,7 @@ export type MonthPropertyTypeMap = {
   calendarRect: ImageRect;
   calendarColor: string;
   boxSize: BoxSize;
+  imageFitOption: ImageFitOption;
 };
 
 export type MonthProperty = keyof MonthPropertyTypeMap;

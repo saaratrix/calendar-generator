@@ -2,6 +2,7 @@ import { derived, get, writable } from 'svelte/store';
 import type { ImageRect } from './image-rect';
 import type { Month, MonthPropertyTypeMap } from './month';
 import { initialCalendarRect } from './constants';
+import { ImageFitOption } from './image-fit-option';
 
 export const backgroundImageLoaded = writable<HTMLImageElement>();
 
@@ -17,6 +18,7 @@ function cloneDefaultMonthData(): Month {
     calendarRect: { value: { ...initialCalendarRect }, isDirty: false },
     calendarColor: { value: "#ffffff", isDirty: false },
     boxSize: { value: { width: 100, height: 100 }, isDirty: false },
+    imageFitOption: { value: ImageFitOption.Fill, isDirty: false },
   };
 }
 

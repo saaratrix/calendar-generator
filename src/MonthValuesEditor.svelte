@@ -1,22 +1,26 @@
 <script lang="ts">
   import {
-    selectedMonth,
+    backgroundImageLoaded,
+    canvasHeight,
+    canvasWidth,
     currentMonthItem,
-    updateMonthProperty,
+    selectedMonth,
     selectedYear,
-    backgroundImageLoaded, canvasWidth, canvasHeight
+    updateMonthProperty
   } from './store';
-  import {monthNames} from "./constants";
+  import { monthNames } from "./constants";
   import { onMount } from 'svelte';
   import { isColorDark } from './calendar-drawer';
   import type { BoxSize } from './box-size';
   import { calculateCalendarHeight } from './utils';
   import type { Month } from './month';
+  import { ImageFitOption, ImageFitOptionVerbose } from './image-fit-option';
 
   let boxSize: BoxSize = { width: 100, height: 100 };
   let backgroundImage: HTMLImageElement;
   let calendarColor: string = "#FFFFFF";
   let borderColor: 'transparent' | 'black' | '' = '';
+  let selectedImageFitOption: ImageFitOption = ImageFitOption.Fill;
 
   $: {
     borderColor = isColorDark(calendarColor) ? 'transparent' : 'black';
@@ -47,6 +51,7 @@
     calendarColor = item.calendarColor.value;
     boxSize = { ...item.boxSize.value };
     backgroundImage = item.backgroundImage.value;
+    selectedImageFitOption = item.imageFitOption.value;
   }
 
   function handleFileUpload(e: InputEvent) {
@@ -88,6 +93,10 @@
     updateMonthProperty('calendarRect', { ...calendarRect });
   }
 
+  function handleImageFitOptionChange() {
+    updateMonthProperty('imageFitOption', selectedImageFitOption);
+  }
+
 </script>
 
 <input type="file" accept="image/*" on:input={handleFileUpload} />
@@ -99,21 +108,26 @@
 </select>
 
 <label for="boxSizeWidth">Calendar Width: </label>
-  <input id="boxSizeWidth" type="number" min="50" bind:value={boxSize.width} on:input={boxSizeChanged} />
-  <label for="boxSizeHeight">Calendar Height: </label>
-  <input id="boxSizeHeight" type="number" min="50" bind:value={boxSize.height} on:input={boxSizeChanged} />
+<input id="boxSizeWidth" type="number" min="50" bind:value={boxSize.width} on:input={boxSizeChanged} />
+<label for="boxSizeHeight">Calendar Height: </label>
+<input id="boxSizeHeight" type="number" min="50" bind:value={boxSize.height} on:input={boxSizeChanged} />
 
-  <label for="calendar-color-picker" class="color-picker-container">
-    Color:
-    <input
-      type="color"
-      bind:value="{calendarColor}"
-      on:input="{() => updateMonthProperty('calendarColor', calendarColor)}"
-      class="calendar-color-picker"
-      id="calendar-color-picker"
-    />
-    <div
-      class="color-display"
-      style="background-color: {calendarColor}; border-color: {borderColor};"
-    />
-  </label>
+<label for="calendar-color-picker" class="color-picker-container">
+  Color:
+  <input
+    type="color"
+    bind:value="{calendarColor}"
+    on:input="{() => updateMonthProperty('calendarColor', calendarColor)}"
+    class="calendar-color-picker"
+    id="calendar-color-picker"
+  />
+  <div
+    class="color-display"
+    style="background-color: {calendarColor}; border-color: {borderColor};"
+  />
+</label>
+<select bind:value={selectedImageFitOption} on:change={handleImageFitOptionChange}>
+  {#each Object.values(ImageFitOption) as option}
+    <option value={option}>{ImageFitOptionVerbose[option]}</option>
+  {/each}
+</select>

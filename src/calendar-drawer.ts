@@ -1,6 +1,5 @@
-import type { ImageRect } from "./image-rect";
-import type { BoxSize } from './box-size';
 import type { Month } from './month';
+import { ImageFitOption } from './image-fit-option';
 
 export interface DrawCalendarOptions {
   year: number;
@@ -44,12 +43,13 @@ export function drawCalendar(options: DrawCalendarOptions) {
     backgroundImage: {value: backgroundImage},
     backgroundRect: {value: backgroundRect},
     calendarRect: {value: calendarRect},
+    imageFitOption: { value: imageFitOption },
   } = options.month;
 
   const context = canvas.getContext('2d');
   context.clearRect(0, 0, canvas.width, canvas.height);
   if (backgroundImage) {
-    context.drawImage(backgroundImage, backgroundRect.x, backgroundRect.y, backgroundRect.width, backgroundRect.height);
+    drawImageProportionally(context, backgroundImage, canvas.width, canvas.height, imageFitOption);
   }
 
   // Calculate border thickness based on box size
@@ -128,4 +128,70 @@ export function drawCalendar(options: DrawCalendarOptions) {
       date++;
     }
   }
+}
+
+function drawImageProportionally(
+  context: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  canvasWidth: number,
+  canvasHeight: number,
+  imageFitOption: ImageFitOption,
+) {
+  switch (imageFitOption) {
+    case ImageFitOption.Fit:
+      drawFitImage(context, img, canvasWidth, canvasHeight);
+      break;
+    case ImageFitOption.Fill:
+      drawFillImage(context, img, canvasWidth, canvasHeight);
+      break;
+    case ImageFitOption.Stretch:
+      drawStretchImage(context, img, canvasWidth, canvasHeight);
+      break;
+    default:
+      break;
+  }
+}
+
+function drawFitImage(context: CanvasRenderingContext2D, img: HTMLImageElement, canvasWidth: number,  canvasHeight: number) {
+  const imageAspectRatio = img.width / img.height;
+  const canvasAspectRatio = canvasWidth / canvasHeight;
+  let drawWidth, drawHeight, drawX, drawY;
+
+  if (canvasAspectRatio > imageAspectRatio) {
+    drawHeight = canvasHeight;
+    drawWidth = drawHeight * imageAspectRatio;
+    drawX = (canvasWidth - drawWidth) / 2;
+    drawY = 0;
+  } else {
+    drawWidth = canvasWidth;
+    drawHeight = drawWidth / imageAspectRatio;
+    drawX = 0;
+    drawY = (canvasHeight - drawHeight) / 2;
+  }
+
+  context.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawFillImage(context: CanvasRenderingContext2D, img: HTMLImageElement, canvasWidth: number,  canvasHeight: number) {
+  const imageAspectRatio = img.width / img.height;
+  const canvasAspectRatio = canvasWidth / canvasHeight;
+  let drawWidth, drawHeight, drawX, drawY;
+
+  if (canvasAspectRatio > imageAspectRatio) {
+    drawWidth = canvasWidth;
+    drawHeight = drawWidth / imageAspectRatio;
+    drawX = 0;
+    drawY = (canvasHeight - drawHeight) / 2;
+  } else {
+    drawHeight = canvasHeight;
+    drawWidth = drawHeight * imageAspectRatio;
+    drawX = (canvasWidth - drawWidth) / 2;
+    drawY = 0;
+  }
+
+  context.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawStretchImage(context: CanvasRenderingContext2D, img: HTMLImageElement, canvasWidth: number,  canvasHeight: number) {
+  context.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 }
