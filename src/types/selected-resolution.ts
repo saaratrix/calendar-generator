@@ -1,0 +1,1 @@
+export type SelectedResolution = `${number}x${number}` | 'auto';

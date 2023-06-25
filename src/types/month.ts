@@ -1,6 +1,6 @@
 import type { ImageRect } from './image-rect';
 import type { BoxSize } from './box-size';
-import type { ImageFitOption } from './image-fit-option';
+import type { ImageFitOption } from '../image-fit-option';
 
 interface DirtyValue<T> {
   value: T;

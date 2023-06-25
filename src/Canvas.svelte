@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { drawCalendar } from './calendar-drawer';
   import { drawYearCalendar } from './calendar-year-drawer';
-  import type { ImageRect } from './image-rect';
+  import type { ImageRect } from './types/image-rect';
   import ImageMover from './ImageMover.svelte';
   import {
     currentSelectedImageStore,
@@ -12,16 +12,19 @@
     currentMonthItem,
     backgroundImageLoaded,
     canvasWidth,
-    canvasHeight, updateMonthProperty,
+    canvasHeight,
+    updateMonthProperty,
+    currentWorkspaceItem,
   } from './store';
   import ImageResizer from './ImageResizer.svelte';
   import { initialCalendarRect, monthNames } from './constants';
   import MonthValuesEditor from './MonthValuesEditor.svelte';
-
-  type SelectedResolution = `${number}x${number}` | 'auto';
+  import { getLocalWorkspaceItem, saveYearToLocalStorage, tryLoadImagesForItem } from './local-workspace-saver';
+  import type { SelectedResolution } from './types/selected-resolution';
+  import type { LocalWorkspaceItem } from './types/local-workspace-item';
 
   let canvas: HTMLCanvasElement;
-  let selectedResolution: SelectedResolution | '' = 'auto';
+  let selectedResolution: SelectedResolution = 'auto';
 
   let currentSelectedImage: ImageRect | undefined = undefined;
 
@@ -32,8 +35,33 @@
       currentSelectedImageStore.set(currentSelectedImage);
     }
   }
+  $: {
+    if (selectedResolution, $currentWorkspaceItem) {
+      const currentItem = $currentWorkspaceItem;
+      const item: LocalWorkspaceItem = { ...currentItem, selectedResolution };
+      saveYearToLocalStorage($selectedYear.toString(), item);
+    }
+  }
 
   onMount(() => {
+    let workspaceItem = getLocalWorkspaceItem($selectedYear.toString());
+    if (!workspaceItem) {
+      workspaceItem = {
+        canvasHeight: $canvasHeight,
+        canvasWidth: $canvasWidth,
+        selectedResolution: selectedResolution,
+        months: $months,
+      };
+      saveYearToLocalStorage($selectedYear.toString(), workspaceItem);
+    } else {
+      months.set(workspaceItem.months);
+    }
+    currentWorkspaceItem.set(workspaceItem);
+
+    canvasWidth.set($currentWorkspaceItem.canvasWidth);
+    canvasHeight.set($currentWorkspaceItem.canvasHeight);
+    selectedResolution = $currentWorkspaceItem.selectedResolution;
+
     const subscriptions = [
       selectedYear.subscribe(() => onMonthYearChange()),
       currentMonthItem.subscribe(() => {
@@ -44,18 +72,30 @@
       canvasWidth.subscribe(() => {
         const rect = $currentMonthItem.backgroundRect.value;
         rect.width = $canvasWidth;
+
+        const currentItem = $currentWorkspaceItem;
+        const item: LocalWorkspaceItem = { ...currentItem, canvasWidth: $canvasWidth };
+        saveYearToLocalStorage($selectedYear.toString(), item);
+
         updateMonthProperty('backgroundRect', rect);
         requestDrawCalendar();
       }),
       canvasHeight.subscribe(() => {
         const rect = $currentMonthItem.backgroundRect.value;
         rect.height = $canvasHeight;
+
+        const currentItem = $currentWorkspaceItem;
+        const item: LocalWorkspaceItem = { ...currentItem, canvasHeight: $canvasHeight };
+        saveYearToLocalStorage($selectedYear.toString(), item);
+
         updateMonthProperty('backgroundRect', rect);
         requestDrawCalendar();
       }),
     ];
 
     selectedMonth.set(new Date().getMonth());
+
+    tryLoadImagesForItem($selectedYear, workspaceItem, months).then(() => requestDrawCalendar());
 
     requestDrawCalendar();
 

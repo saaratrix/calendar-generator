@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
-  import type { ImageRect } from "./image-rect";
+  import type { ImageRect } from "./types/image-rect";
   import { currentSelectedImageStore, updateMonthProperty } from './store';
-  import type { MonthProperty, MonthPropertyTypeMap } from './month';
+  import type { MonthProperty, MonthPropertyTypeMap } from './types/month';
 
   interface ImageMovedEvent {
     imageMoved: ImageRect;

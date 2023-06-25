@@ -1,7 +1,7 @@
 <script lang="ts">
   import { currentMonthItem, selectedYear, selectedMonth, updateMonthProperty } from './store';
-  import type { ImageRect } from './image-rect';
-  import type { BoxSize } from './box-size';
+  import type { ImageRect } from './types/image-rect';
+  import type { BoxSize } from './types/box-size';
   import { calculateCalendarHeight, calculateRows } from './utils';
 
   export let imageRect: ImageRect;

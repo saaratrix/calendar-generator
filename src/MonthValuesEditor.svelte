@@ -11,9 +11,9 @@
   import { monthNames } from "./constants";
   import { onMount } from 'svelte';
   import { isColorDark } from './calendar-drawer';
-  import type { BoxSize } from './box-size';
+  import type { BoxSize } from './types/box-size';
   import { calculateCalendarHeight } from './utils';
-  import type { Month } from './month';
+  import type { Month } from './types/month';
   import { ImageFitOption, ImageFitOptionVerbose } from './image-fit-option';
 
   let boxSize: BoxSize = { width: 100, height: 100 };

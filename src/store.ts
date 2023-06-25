@@ -1,8 +1,12 @@
 import { derived, get, writable } from 'svelte/store';
-import type { ImageRect } from './image-rect';
-import type { Month, MonthPropertyTypeMap } from './month';
-import { initialCalendarRect } from './constants';
+import type { ImageRect } from './types/image-rect';
+import type { Month, MonthPropertyTypeMap } from './types/month';
+import { initialCalendarRect, monthNames } from './constants';
 import { ImageFitOption } from './image-fit-option';
+import { saveImageToIndexedDB, saveYearToLocalStorage } from './local-workspace-saver';
+import type { LocalWorkspaceItem } from './types/local-workspace-item';
+
+export const currentWorkspaceItem = writable<LocalWorkspaceItem>(undefined);
 
 export const backgroundImageLoaded = writable<HTMLImageElement>();
 
@@ -28,7 +32,9 @@ export const selectedYear = writable<number>(new Date().getFullYear());
 
 export const currentMonthItem = derived(
   [months, selectedMonth],
-  ([$months, $selectedMonth]) => $months[$selectedMonth]
+  ([$months, $selectedMonth]) => {
+    return $months[$selectedMonth]
+  }
 );
 
 export function updateMonthProperty<T extends keyof MonthPropertyTypeMap>(
@@ -39,16 +45,33 @@ export function updateMonthProperty<T extends keyof MonthPropertyTypeMap>(
 
   months.update(months => {
     const currentMonth = months[currentMonthIndex];
+    const year = get(selectedYear);
+
     currentMonth[property].value = value;
     currentMonth[property].isDirty = true;
+    trySetBackgroundImage(property, value as HTMLImageElement, year, currentMonthIndex);
 
-    months.forEach(month => {
+    for (let i = 0; i < months.length; i++) {
+      const month = months[i];
       if (month[property].isDirty) {
-        return;
+        continue;
       }
       month[property].value = value;
-    });
+      trySetBackgroundImage(property, value as HTMLImageElement, year, i);
+    }
+
+    const workspaceItem = get(currentWorkspaceItem);
+    if (workspaceItem) { workspaceItem.months = months; }
+    saveYearToLocalStorage(year.toString(), workspaceItem);
 
     return months;
   });
+}
+
+function trySetBackgroundImage(property: keyof Month, value: HTMLImageElement, year: number, month: number): void {
+  if (property !== 'backgroundImage') {
+    return;
+  }
+
+  saveImageToIndexedDB(year, month, value as HTMLImageElement);
 }

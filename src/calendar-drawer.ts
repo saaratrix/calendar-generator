@@ -1,4 +1,4 @@
-import type { Month } from './month';
+import type { Month } from './types/month';
 import { ImageFitOption } from './image-fit-option';
 
 export interface DrawCalendarOptions {

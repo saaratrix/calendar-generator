@@ -1,5 +1,5 @@
 import { drawCalendar } from './calendar-drawer';
-import type { Month } from './month';
+import type { Month } from './types/month';
 
 export interface DrawYearCalendarOptions {
   year: number;
