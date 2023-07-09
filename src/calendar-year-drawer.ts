@@ -21,31 +21,31 @@ export function drawYearCalendar(options: DrawYearCalendarOptions): HTMLCanvasEl
   } = options;
 
   const canvas = document.createElement('canvas');
-  canvas.width = cellWidth * 3 + cellSpacing * 2;
-  canvas.height = cellHeight * 4 + cellSpacing * 3;
+  // Adjust canvas width to fit one month per row
+  canvas.width = cellWidth;
+  // Adjust canvas height to fit 12 months
+  canvas.height = (cellHeight + cellSpacing) * 12;
   const context = canvas.getContext('2d');
 
   const monthCanvas = document.createElement('canvas');
   monthCanvas.width = cellWidth;
   monthCanvas.height = cellHeight;
 
-  for (let quarter = 0; quarter < 4; quarter++) {
-    for (let monthInQuarter = 0; monthInQuarter < 3; monthInQuarter++) {
-      const monthIndex = quarter * 3 + monthInQuarter;
+  for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+    drawCalendar({
+      monthIndex,
+      month: months[monthIndex],
+      year,
+      canvas: monthCanvas,
+      firstDayOfWeek,
+    });
 
-      drawCalendar({
-        monthIndex,
-        month: months[monthIndex],
-        year,
-        canvas: monthCanvas,
-        firstDayOfWeek,
-      });
+    // Always draw at the start of the row
+    const x = 0;
+    // The y position depends on the current month
+    const y = monthIndex * (cellHeight + cellSpacing);
 
-      const x = monthInQuarter * (cellWidth + cellSpacing);
-      const y = quarter * (cellHeight + cellSpacing);
-
-      context.drawImage(monthCanvas, x, y, cellWidth, cellHeight);
-    }
+    context.drawImage(monthCanvas, x, y, cellWidth, cellHeight);
   }
 
   return canvas;
