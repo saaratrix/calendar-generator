@@ -8,7 +8,7 @@ interface DirtyValue<T> {
 }
 
 export type Month = {
-  backgroundImage: DirtyValue<HTMLImageElement>;
+  backgroundImage: DirtyValue<HTMLImageElement | null>;
   backgroundRect: DirtyValue<ImageRect>;
   calendarRect: DirtyValue<ImageRect>;
   calendarColor: DirtyValue<string>;

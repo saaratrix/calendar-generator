@@ -25,7 +25,7 @@ export function drawYearCalendar(options: DrawYearCalendarOptions): HTMLCanvasEl
   canvas.width = cellWidth;
   // Adjust canvas height to fit 12 months
   canvas.height = (cellHeight + cellSpacing) * 12;
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   const monthCanvas = document.createElement('canvas');
   monthCanvas.width = cellWidth;

@@ -1,7 +1,7 @@
 import { derived, get, writable } from 'svelte/store';
 import type { ImageRect } from './types/image-rect';
 import type { Month, MonthPropertyTypeMap } from './types/month';
-import { initialCalendarRect, monthNames } from './constants';
+import { initialCalendarRect } from './constants';
 import { ImageFitOption } from './image-fit-option';
 import { saveImageToIndexedDB, saveYearToLocalStorage } from './local-workspace-saver';
 import type { LocalWorkspaceItem } from './types/local-workspace-item';

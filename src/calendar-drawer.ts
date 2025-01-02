@@ -46,7 +46,7 @@ export function drawCalendar(options: DrawCalendarOptions) {
     imageFitOption: { value: imageFitOption },
   } = options.month;
 
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
   context.clearRect(0, 0, canvas.width, canvas.height);
   if (backgroundImage) {
     drawImageProportionally(context, backgroundImage, canvas.width, canvas.height, imageFitOption);
